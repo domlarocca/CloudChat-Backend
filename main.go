@@ -1,20 +1,20 @@
 package main
 
 import (
-	"net/http"
-	"os"
-	"log"
+	"CloudChat/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
-	"CloudChat/handlers"
+	"log"
+	"net/http"
+	"os"
 )
 
 func init() {
-	err := godotenv.Load()	
+	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	
+
 }
 
 func main() {
@@ -24,8 +24,11 @@ func main() {
 	// Health Check
 	r.Get("/", handlers.HealthCheckHandler)
 
-	// Registration 
+	// Registration
 	r.Post("/users", handlers.RegisterHandler)
+
+	// Login
+	r.Post("/login", handlers.LoginHandler)
 
 	serverAddr := ":" + port
 	log.Printf("Server is listening on %s...\n", serverAddr)
