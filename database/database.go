@@ -2,13 +2,13 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
-	"log"
-	"os"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	"log"
+	"os"
 	"regexp"
-	"errors"
 )
 
 var DB *sql.DB
@@ -82,6 +82,55 @@ func RegisterUser(email, birthday, username, password string) error {
 		return err
 	}
 	log.Println("User registered successfully")
+	return nil
+}
+
+func LoginUser(username, password string) error {
+	// Check if the user exists & grab their ID
+	userID, err := getUserIDByUsername(username)
+	if err != nil {
+		return err
+	}
+
+	if userID == 0 {
+		return errors.New("user not found")
+	}
+
+	// Validate the password
+	if err := checkUserPassword(userID, password); err != nil {
+		return err
+	}
+
+	log.Println("User logged in successfully")
+	return nil
+}
+
+func getUserIDByUsername(username string) (int64, error) {
+	var userID int64
+	err := DB.QueryRow("SELECT userID FROM users WHERE username = ?", username).Scan(&userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil // User not found
+		}
+		log.Println("Error querying user ID:", err)
+		return 0, err
+	}
+	return userID, nil
+}
+
+func checkUserPassword(userID int64, password string) error {
+	var storedPassword string
+	err := DB.QueryRow("SELECT password FROM user_credentials WHERE userID = ?", userID).Scan(&storedPassword)
+	if err != nil {
+		log.Println("Error querying user password:", err)
+		return err
+	}
+
+	// Validate the password (you may want to use a more secure password validation)
+	if storedPassword != password {
+		return errors.New("Incorrect password")
+	}
+
 	return nil
 }
 
